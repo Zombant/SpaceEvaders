@@ -1,0 +1,68 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlanetFall : MonoBehaviour {
+
+	Rigidbody2D ThisBody;
+	Transform ThisTransform;
+	GameObject shipMove;
+	GameObject gameManager;
+
+	OpenMenu openMenu;
+
+	bool shouldGrow;
+
+	// Use this for initialization
+	void Start () {
+		ThisBody = GetComponent<Rigidbody2D> ();
+		ThisTransform = GetComponent<Transform> ();
+		shipMove = GameObject.FindGameObjectWithTag ("Player");
+		gameManager = GameObject.FindGameObjectWithTag ("GameManager");
+		openMenu = GameObject.FindGameObjectWithTag ("Settings").GetComponent<OpenMenu> ();
+		shouldGrow = false;
+	}
+	
+	void FixedUpdate () {
+		if (shouldGrow) {
+			ThisTransform.localScale += new Vector3 (.1f, .1f, .1f);
+			ThisTransform.position = Vector3.zero;
+			if(ThisTransform.localScale == new Vector3(1.5f, 1.5f, 1.5f)){
+				shouldGrow = false;
+				Debug.Log ("PLANET SHOULDGROW FALSE");
+				gameManager.GetComponent<GameManager> ().reenableStuff ();
+			}
+		}
+
+	}
+
+	public void Fall(){
+		//TODO: Replace with actual animation and set planet to static
+		//Make the planet fall
+		ThisBody.AddForce (gameManager.transform.up * 800f);
+		ThisBody.AddForce (new Vector2 (.5f, .5f) * 200f);
+		ThisBody.gravityScale = 10;
+		Invoke ("disable", 1.5f);
+
+	}
+
+	void disable(){
+		//Reset planet for re-growing
+		gameObject.SetActive (false);
+		ThisBody.gravityScale = 0;
+		ThisTransform.localScale = new Vector3 (0, 0, 0);
+		ThisTransform.position = Vector3.zero;
+		gameObject.SetActive (true);
+	}
+
+	//called from GameManager.GameOver()
+	public void Grow(){
+		Invoke ("growPlanet", 1.5f);
+	}
+
+	void growPlanet(){
+		shouldGrow = true;
+		Debug.Log ("PLANET SHOULDGROW TRUE");
+	}
+
+}

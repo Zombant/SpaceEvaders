@@ -1,0 +1,169 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/*
+ * Handles the opening and closing of the menu planet
+ */
+public class OpenMenu : MonoBehaviour {
+
+	//References to other GameObjects and scripts
+	PlanetFall planetFall;
+	PlanetMove planetMove;
+	ShipMove shipMove;
+	ManagePlatforms createPlatforms;
+	GameManager gameManager;
+
+	//References to the Text gameobject and its Canvas
+	GameObject levelText;
+	GameObject levelCanvas;
+
+	//The Transform component
+	Transform ThisTransform;
+
+	//Whether or not the menu is currently open
+	bool menuOpen;
+
+	//Whether or not the menu is moving in specified way
+	bool shouldGrow;
+	bool shouldMoveUp;
+	bool shouldShrink;
+	bool shouldMoveDown;
+
+	// Use this for initialization
+	void Start () {
+		ThisTransform = GetComponent<Transform> ();
+		planetFall = GameObject.FindGameObjectWithTag ("Planet").GetComponent<PlanetFall> ();
+		planetMove = GameObject.FindGameObjectWithTag ("Planet").GetComponent<PlanetMove> ();
+		shipMove = GameObject.FindGameObjectWithTag ("Player").GetComponent<ShipMove> ();
+		createPlatforms = GameObject.FindGameObjectWithTag ("Planet").GetComponent<ManagePlatforms> ();
+		gameManager = GameObject.Find ("GameManager").GetComponent<GameManager> ();
+		levelCanvas = GameObject.FindGameObjectWithTag ("LevelCanvas");
+		levelText = GameObject.FindGameObjectWithTag ("LevelText");
+
+		//Disable Level text on initial startup
+		levelCanvas.SetActive (false);
+
+		//Menu should not be switching states on startup
+		menuOpen = false;
+		shouldGrow = false;
+		shouldMoveUp = false;
+		shouldShrink = false;
+		shouldMoveDown = false;
+	}
+	
+	// Update is called once per frame
+	void Update () {
+		//If the menu is not open, allow one click to open
+		if (!menuOpen) {
+			RaycastHit2D hit = Physics2D.Raycast (Camera.main.ScreenToWorldPoint (Input.mousePosition), Vector2.zero);
+			if (/*hit.collider != null && hit.transform.gameObject.tag == "Settings"*/Input.GetButtonDown("Fire2")) {
+				openMenu ();
+				Debug.Log ("SETTINGS");
+
+			}
+		}
+		//If the menu is open, allow one click to close
+		if (menuOpen) {
+			RaycastHit2D hit = Physics2D.Raycast (Camera.main.ScreenToWorldPoint (Input.mousePosition), Vector2.zero);
+			if (/*hit.collider != null && hit.transform.gameObject.tag == "Planet"*/Input.GetButtonDown("Fire1")) {
+				closeMenu ();
+				Debug.Log ("RETURN");
+
+			}
+		}
+	}
+
+	/*
+	 * Move and scale the menu accordingly
+	 */
+	void FixedUpdate(){
+		if (shouldGrow) {
+			ThisTransform.localScale += new Vector3 (.1f, .1f, .1f);
+			if(ThisTransform.localScale == new Vector3(1.5f, 1.5f, 1.5f)){
+				shouldGrow = false;
+				Debug.Log ("MENU SHOULDGROW FALSE");
+			}
+		}
+		if (shouldMoveUp) {
+			ThisTransform.position = Vector3.MoveTowards (ThisTransform.position, Vector3.zero, .5f);
+			if (ThisTransform.position == Vector3.zero) {
+				shouldMoveUp = false;
+				Debug.Log ("MENU SHOULDMOVEUP FALSE");
+			}
+		}
+		if (shouldShrink) {
+			ThisTransform.localScale -= new Vector3 (.1f, .1f, .1f);
+			if(ThisTransform.localScale == new Vector3(.3f, .3f, .3f)){
+				shouldShrink = false;
+				Debug.Log ("MENU SHOULDSHRINK FALSE");
+			}
+		}
+		if (shouldMoveDown) {
+			ThisTransform.position = Vector3.MoveTowards (ThisTransform.position, new Vector3 (-2.99f, -4.91f, 0f), .5f);
+			if (ThisTransform.position == new Vector3 (-2.99f, -4.91f, 0f)) {
+				shouldMoveDown = false;
+				Debug.Log ("MENU SHOULDMOVEDOWN FALSE");
+			}
+		}
+	}
+
+	/*
+	 * Called when the user opens the menu.
+	 * Opens the menu
+	 */
+	void openMenu(){
+		//Debug.Log ("OPEN MENU");
+
+		//Set the state of menuOpen to true
+		menuOpen = true;
+		Debug.Log ("MENU MENUOPEN TRUE");
+
+		//shrink and move the planet into the corner
+		planetMove.shrinkPlanet();
+
+		//Remove the player
+		shipMove.gameObject.SetActive (false);
+
+		//Translate and grow the menu planet
+		shouldGrow = true;
+		Debug.Log ("MENU SHOULDGROW TRUE");
+		shouldMoveUp = true;
+		Debug.Log ("MENU SHOULDMOVEUP TRUE");
+
+		//Enable the level text on the menu planet
+		levelCanvas.SetActive (true);
+
+	}
+
+	/*
+	 * Called when the user closes the menu.
+	 * Closes the menu
+	 */
+	void closeMenu() {
+		//Debug.Log ("CLOSE MENU");
+
+		//Set the state of menuOpen to false
+		menuOpen = false;
+		Debug.Log ("MENU MENUOPEN FALSE");
+
+		//Move the planet back
+		planetMove.replacePlanet();
+
+		//Put the player back if not level 0
+		if (gameManager.getLevel () != 0) {
+			shipMove.gameObject.SetActive (true);
+		}
+
+		//Translate and shrink the menu planet
+		shouldShrink = true;
+		Debug.Log ("MENU SHOULDSHRINK TRUE");
+		shouldMoveDown = true;
+		Debug.Log ("MENU SHOULDMOVEDOWN TRUE");
+
+		//Disable the level text on the menu planet
+		levelCanvas.SetActive (false);
+
+	}
+		
+}
